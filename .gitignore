@@ -1,3 +1,6 @@
 # package files
 node_modules
 
+# env files
+*.env
+*.yaml
