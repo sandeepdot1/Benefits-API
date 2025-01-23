@@ -22,23 +22,33 @@ exports.seedBenefits = async (req, res) => {
   }
 };
 
+
 // Get all benefits
-exports.getAllBenefits = async (req, res) => {
+exports.getBenefits = async (req, res) => {
+  const { category, page = 1, limit = 10 } = req.query;
+
   try {
-    const { planName, page = 1, limit = 10 } = req.query; // Extract query parameters, with defaults
-    const query = planName ? { planName } : {};
+    // If category is provided, fetch all benefits for that category without pagination
+    if (category) {
+      const benefits = await Benefit.find({ benefitCategory: category });
+
+      return res.status(200).json({
+        total: benefits.length,
+        benefits,
+      });
+    }
     
     // Parse page and limit as integers
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
 
     // Fetch benefits with pagination
-    const benefits = await Benefit.find(query)
+    const benefits = await Benefit.find({})
       .skip((pageNumber - 1) * limitNumber) // Skip documents for previous pages
       .limit(limitNumber);  // Limit the number of documents returned
 
     // Get total count for all documents matching the query
-    const totalCount = await Benefit.countDocuments(query);
+    const totalCount = await Benefit.countDocuments({});
 
     res.status(200).json({
       totalCount, // Total number of matching documents
@@ -78,3 +88,16 @@ exports.getBenefitById = async (req, res) => {
     });
   }
 };
+
+
+// Get all distinct benefit categories
+exports.getAllBenefitCategories = async (req, res) => {
+  try {
+    const categories = await Benefit.distinct("benefitCategory");
+    res.status(200).json({ categories });
+  } catch (error) {
+    console.error("Error fetching benefit categories:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
